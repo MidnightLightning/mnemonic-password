@@ -1,5 +1,5 @@
 
-A wordlist of 2048 words, each of which only needs the first 3 letters to be uniquely-identified (26*26*26 = 17,576 possibilities, which is more than enough, but two characters isn't enough). That mean each word stores 11 bits of data.
+A wordlist of 2048 words, each of which only needs the first 4 letters to be uniquely-identified (some words are only three letters long, so the four-letter match includes "null" for a fourth letter option). That mean each word stores 11 bits of data.
 
 Creating a four-word "password", you can create 2048^4 = 17,592,186,044,416 (17.6 trillion) combinations; enough for everyone on the planet to have a few hundred. To be safer, creating a five-word password creates 36,028,797,018,963,968 (36 quadrillion), enough for everyone on the planet to have ~5 million passwords.
 
