@@ -6,6 +6,10 @@ var wordMap = {};
 for (var i = 0; i < words.length; i++) {
   wordMap[words[i].value] = words[i].label;
 }
+var reverseWordMap = {};
+for (var i = 0; i < words.length; i++) {
+  reverseWordMap[words[i].label.substring(0,4)] = words[i].value;
+}
 
 /**
  * Read a 50-bit unsigned integer from a Node Buffer object at a given offset
@@ -49,6 +53,17 @@ var seedToNumbers = function(seed) {
   out[4] = out[4] | check;
   return out;
 };
+var numbersToSeed = function(numbers) {
+  var nums = numbers.map(function(el) { return el; }); // Don't clobber input array
+  var out = nums[0];
+  nums[4] = nums[4] & 0x3F;
+  for (var i = 1; i < 5; i++) {
+    var bitOffset = i*11;
+    var shifted = nums[i] * Math.pow(2, bitOffset);
+    out = out+shifted;
+  }
+  return out;
+};
 
 /**
  * Given a 50-bit number, calculate a checksum by taking every tenth bit
@@ -65,6 +80,12 @@ var calcChecksum = function(seed) {
   }
   return check;
 };
+var verifyChecksum = function(numbers) {
+  var seed = numbersToSeed(numbers);
+  var check = calcChecksum(seed);
+  var givenChecksum = numbers[4] >>> 6;
+  return check == givenChecksum;
+};
 
 /**
  * Given an array of 11-bit numbers, translate into an array of words from the wordlist
@@ -74,6 +95,7 @@ var calcChecksum = function(seed) {
 var numbersToWords = function(numbers) {
   var out = [];
   for (var i = 0; i < numbers.length; i++) {
+    if (typeof wordMap[numbers[i]] === 'undefined') return false;
     out.push(wordMap[numbers[i]]);
   }
   return out;
@@ -85,6 +107,16 @@ var numbersToWords = function(numbers) {
  */
 var seedToWords = function(seed) {
   return numbersToWords(seedToNumbers(seed));
+};
+
+var wordsToNumbers = function(words) {
+  var out = [];
+  for (var i = 0; i < words.length; i++) {
+    var prefix = words[i].substring(0,4);
+    if (typeof reverseWordMap[prefix] === 'undefined') return false;
+    out.push(reverseWordMap[prefix]);
+  }
+  return out;
 };
 
 /**
@@ -141,6 +173,26 @@ var generateSeed = function() {
   return readUInt50BE(crypto.randomBytes(8));
 };
 
+var sanitizeKey = function(key) {
+  return key
+    .toLowerCase()
+    .replace(/[^a-z]+/g, ' ')
+    .split(' ')
+    .slice(0,5)
+    .join(' ');
+};
+
+var validateKey = function(key) {
+  if (key.toString() != key) return false;
+  if (key.split(' ').length !== 5) return false;
+  return true;
+};
+
+var wordsToSeed = function(words) {
+  var numbers = wordsToNumbers(words);
+  if (!verifyChecksum(numbers)) return false;
+  return numbersToSeed(numbers);
+};
 
 
 function Mnemonic(initialValue) {
@@ -149,7 +201,7 @@ function Mnemonic(initialValue) {
   if (typeof initialValue !== 'undefined') this.setValue(initialValue);
 }
 Mnemonic.prototype.setValue = function(val) {
-  this.value = val;
+  this.value = val || 0;
   this.numbers = this.toArray();
 };
 Mnemonic.prototype.getValue = function() {
@@ -183,12 +235,24 @@ var out = {
       seed = generateSeed();
     }
     return new Mnemonic(seed);
+  },
+  decode: function(key) {
+    key = sanitizeKey(key);
+    if (!validateKey(key)) return false;
+    var seed = wordsToSeed(key.split(' '));
+    return new Mnemonic(seed);
   }
 };
 
 if (require.main === module) {
   // Run from command line
-  console.log(JSON.stringify(out.encode().toObj(), null, 2));
+  if (process.argv.length > 2) {
+    // Decode a key
+    console.log(JSON.stringify(out.decode(process.argv[2]).toObj(), null, 2));
+  } else {
+    // Generate a key
+    console.log(JSON.stringify(out.encode().toObj(), null, 2));
+  }
 } else {
   module.exports = out;
 }
