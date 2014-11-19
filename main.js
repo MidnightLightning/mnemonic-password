@@ -240,6 +240,7 @@ var out = {
     key = sanitizeKey(key);
     if (!validateKey(key)) return false;
     var seed = wordsToSeed(key.split(' '));
+    if (seed === false) return false;
     return new Mnemonic(seed);
   }
 };

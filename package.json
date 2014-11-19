@@ -1,0 +1,21 @@
+{
+  "name": "mnemonic-password",
+  "version": "1.0.0",
+  "description": "Help humans create and remember strong entropy-based passwords",
+  "main": "main.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MidnightLightning/mnemonic-password.git"
+  },
+  "author": "Brooks Boyd <boydb@midnightdesign.ws>",
+  "bugs": {
+    "url": "https://github.com/MidnightLightning/mnemonic-password/issues"
+  },
+  "homepage": "https://github.com/MidnightLightning/mnemonic-password"
+}
